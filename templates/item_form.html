@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card mx-auto" style="max-width:520px"><div class="card-body">
+  <h4>Daftarkan Alat/Fasilitas</h4>
+  <form method="post">
+    <input class="form-control mb-2" name="name" placeholder="Nama alat" required>
+    <select class="form-select mb-2" name="category">
+      {% for c in categories %}<option>{{ c }}</option>{% endfor %}
+    </select>
+    <textarea class="form-control mb-3" name="description" placeholder="Deskripsi (kondisi, jumlah, dll)"></textarea>
+    <button class="btn btn-primary">Simpan</button>
+  </form>
+</div></div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>Permintaan Peminjaman Alat Saya</h4>
+<table class="table table-sm bg-white align-middle">
+  <tr><th>Alat</th><th>Peminjam</th><th>Reputasi</th><th>Tanggal</th><th>Risiko (AI)</th><th>Status</th><th>Aksi</th></tr>
+  {% for l in loans %}
+  {% set rep = reputation(l.borrower_id) %}
+  <tr>
+    <td>{{ l.item.name }}</td>
+    <td>{{ l.borrower.name }}</td>
+    <td>{{ rep if rep is not none else 'belum ada riwayat' }}</td>
+    <td>{{ l.start_date }} s/d {{ l.due_date }}</td>
+    <td>
+      {% if l.risk_label %}
+        <span class="badge bg-{{ {'rendah':'success','sedang':'warning','tinggi':'danger'}[l.risk_label] }}">
+          {{ l.risk_label }} ({{ (l.risk_prob*100)|round|int }}%)</span>
+      {% else %}<span class="text-muted small">model belum dilatih</span>{% endif %}
+    </td>
+    <td><span class="badge bg-info text-dark">{{ l.status }}</span></td>
+    <td>
+      {% if l.status == 'diajukan' %}
+        <form class="d-inline" method="post" action="{{ url_for('loan_action', loan_id=l.id, action='approve') }}"><button class="btn btn-sm btn-success">Setujui</button></form>
+        <form class="d-inline" method="post" action="{{ url_for('loan_action', loan_id=l.id, action='reject') }}"><button class="btn btn-sm btn-outline-danger">Tolak</button></form>
+      {% elif l.status == 'disetujui' %}
+        <form method="post" action="{{ url_for('loan_action', loan_id=l.id, action='handover') }}"><button class="btn btn-sm btn-primary">Serahkan alat</button></form>
+      {% elif l.status in ('dipinjam', 'terlambat') %}
+        <form class="d-flex gap-1" method="post" action="{{ url_for('loan_action', loan_id=l.id, action='return') }}">
+          <select class="form-select form-select-sm" name="rating" style="width:80px">
+            {% for r in [5,4,3,2,1] %}<option>{{ r }}</option>{% endfor %}</select>
+          <button class="btn btn-sm btn-primary">Dikembalikan</button>
+        </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% else %}<tr><td colspan="7" class="text-muted">Belum ada permintaan.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

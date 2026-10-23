@@ -1,0 +1,6 @@
+flask
+flask-sqlalchemy
+flask-login
+scikit-learn
+pandas
+joblib

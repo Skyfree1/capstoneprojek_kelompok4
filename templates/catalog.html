@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="d-flex mb-3" method="get">
+  <input class="form-control me-2" name="q" value="{{ q }}" placeholder="Cari alat/fasilitas...">
+  <button class="btn btn-outline-primary">Cari</button>
+</form>
+<div class="row g-3">
+  {% for i in items %}
+  <div class="col-md-4"><div class="card h-100"><div class="card-body">
+    <h5>{{ i.name }}</h5>
+    <span class="badge bg-secondary">{{ i.category }}</span>
+    <p class="mt-2 small text-muted">{{ i.description }}</p>
+    <p class="small mb-2">Pemilik: {{ i.owner.name }}</p>
+    {% if i.owner_id != current_user.id %}
+      <a class="btn btn-sm btn-primary" href="{{ url_for('request_loan', item_id=i.id) }}">Ajukan Pinjam</a>
+    {% else %}<span class="small text-muted">Alat Anda</span>{% endif %}
+  </div></div></div>
+  {% else %}<p class="text-muted">Belum ada alat. Tambahkan lewat menu "Tambah Alat".</p>
+  {% endfor %}
+</div>
+{% endblock %}

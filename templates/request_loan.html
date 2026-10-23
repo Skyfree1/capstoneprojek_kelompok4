@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card mx-auto" style="max-width:520px"><div class="card-body">
+  <h4>Ajukan Peminjaman</h4>
+  <p><b>{{ item.name }}</b> <span class="badge bg-secondary">{{ item.category }}</span><br>
+     <span class="small text-muted">Pemilik: {{ item.owner.name }}</span></p>
+  <form method="post">
+    <label class="small">Tanggal mulai</label>
+    <input class="form-control mb-2" type="date" name="start" required>
+    <label class="small">Tanggal kembali</label>
+    <input class="form-control mb-3" type="date" name="due" required>
+    <button class="btn btn-primary">Kirim Pengajuan</button>
+  </form>
+</div></div>
+{% endblock %}

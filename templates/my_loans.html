@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>Pinjaman Saya</h4>
+<table class="table table-sm bg-white">
+  <tr><th>Alat</th><th>Mulai</th><th>Kembali</th><th>Status</th><th></th></tr>
+  {% for l in loans %}
+  <tr>
+    <td>{{ l.item.name }}</td><td>{{ l.start_date }}</td><td>{{ l.due_date }}</td>
+    <td><span class="badge bg-info text-dark">{{ l.status }}</span></td>
+    <td>{% if l.status == 'diajukan' %}
+      <form method="post" action="{{ url_for('loan_action', loan_id=l.id, action='cancel') }}">
+        <button class="btn btn-sm btn-outline-danger">Batalkan</button></form>{% endif %}</td>
+  </tr>
+  {% else %}<tr><td colspan="5" class="text-muted">Belum ada pinjaman.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}
