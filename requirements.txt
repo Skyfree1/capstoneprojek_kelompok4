@@ -4,3 +4,4 @@ flask-login
 scikit-learn
 pandas
 joblib
+neo4j

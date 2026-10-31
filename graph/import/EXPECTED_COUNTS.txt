@@ -1,0 +1,13 @@
+Jumlah yang harus muncul di Neo4j setelah 01-02 (cek dengan 03_validasi.cypher)
+RT: 3
+Warga: 45
+Kategori: 4
+Barang: 28
+Peminjaman: 267
+TINGGAL_DI: 45
+MEMILIKI: 28
+TERMASUK: 28
+MENGAJUKAN: 267
+ATAS: 267
+MENJAMIN: 70
+PERNAH_MEMINJAM_DARI: 192

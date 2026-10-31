@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h4 class="mb-0">Daftar Warga</h4>
+  <form method="get" class="d-flex gap-2">
+    <select class="form-select form-select-sm" name="rt" onchange="this.form.submit()">
+      <option value="">Semua RT</option>
+      {% for r in rts %}<option {% if r == rt %}selected{% endif %}>{{ r }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+<div class="table-responsive">
+<table class="table table-sm bg-white align-middle">
+  <tr><th>Nama</th><th>RT</th><th>Trust Score</th><th>Reputasi</th><th>Penjamin baik</th></tr>
+  {% for u in users %}{% set t = trust[u.id] %}
+  <tr>
+    <td><a href="{{ url_for('profile', user_id=u.id) }}">{{ u.name }}</a></td>
+    <td>{{ u.rt }}</td>
+    <td><span class="badge bg-{{ trust_badge[t.label] }}">{{ t.score }}</span></td>
+    <td>{{ t.reputasi if t.reputasi is not none else 'belum ada riwayat' }}</td>
+    <td>{{ t.penjamin_baik }} / {{ t.penjamin_total }}</td>
+  </tr>
+  {% endfor %}
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+CREATE CONSTRAINT pw_warga_id IF NOT EXISTS FOR (w:Warga) REQUIRE w.warga_id IS UNIQUE;
+CREATE CONSTRAINT pw_rt_id IF NOT EXISTS FOR (r:RT) REQUIRE r.rt_id IS UNIQUE;
+CREATE CONSTRAINT pw_barang_id IF NOT EXISTS FOR (b:Barang) REQUIRE b.barang_id IS UNIQUE;
+CREATE CONSTRAINT pw_kategori_nama IF NOT EXISTS FOR (k:Kategori) REQUIRE k.nama IS UNIQUE;
+CREATE CONSTRAINT pw_peminjaman_id IF NOT EXISTS FOR (p:Peminjaman) REQUIRE p.peminjaman_id IS UNIQUE;
+
+CREATE INDEX pw_peminjaman_status IF NOT EXISTS FOR (p:Peminjaman) ON (p.status);
+
+SHOW CONSTRAINTS;
+SHOW INDEXES;

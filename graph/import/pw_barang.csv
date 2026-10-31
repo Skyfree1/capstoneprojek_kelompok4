@@ -1,0 +1,29 @@
+barang_id,nama,kategori,jumlah,pemilik_id,aktif
+1,Tenda 4x6,Alat pesta,2,10,true
+2,Kursi lipat,Alat pesta,60,40,true
+3,Meja panjang,Alat pesta,10,36,true
+4,Sound system kecil,Alat pesta,1,14,true
+5,Dandang besar,Alat pesta,3,29,true
+6,Kompor gas 2 tungku,Alat pesta,2,42,true
+7,Termos nasi,Alat pesta,4,23,true
+8,Karpet masjid,Alat pesta,6,32,true
+9,Lampu hias,Alat pesta,20,41,true
+10,Piring & gelas (set),Alat pesta,100,16,true
+11,Bor listrik,Alat pertukangan,1,5,true
+12,Tangga lipat 3 m,Alat pertukangan,1,38,true
+13,Gergaji mesin,Alat pertukangan,1,27,true
+14,Gerinda tangan,Alat pertukangan,1,3,true
+15,Kunci pipa,Alat pertukangan,2,13,true
+16,Mesin potong rumput,Alat pertukangan,1,12,true
+17,Kompresor angin,Alat pertukangan,1,3,true
+18,Linggis & cangkul,Alat pertukangan,4,37,true
+19,Pos ronda,Ruangan/fasilitas,1,4,true
+20,Balai warga,Ruangan/fasilitas,1,31,true
+21,Lapangan bulu tangkis,Ruangan/fasilitas,1,13,true
+22,Mushola (ruang serbaguna),Ruangan/fasilitas,1,33,true
+23,Gerobak dorong,Lainnya,2,2,true
+24,Kursi roda,Lainnya,1,9,true
+25,Payung tenda pasar,Lainnya,3,36,true
+26,Proyektor,Lainnya,1,14,true
+27,Jas hujan ponco,Lainnya,10,36,true
+28,Ember besar & selang,Lainnya,3,9,true

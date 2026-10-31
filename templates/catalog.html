@@ -1,21 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
-<form class="d-flex mb-3" method="get">
-  <input class="form-control me-2" name="q" value="{{ q }}" placeholder="Cari alat/fasilitas...">
-  <button class="btn btn-outline-primary">Cari</button>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-6"><input class="form-control" name="q" value="{{ q }}" placeholder="Cari alat/fasilitas..."></div>
+  <div class="col-md-4">
+    <select class="form-select" name="cat">
+      <option value="">Semua kategori</option>
+      {% for c in categories %}<option {% if c == cat %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2"><button class="btn btn-outline-primary w-100">Cari</button></div>
 </form>
 <div class="row g-3">
   {% for i in items %}
   <div class="col-md-4"><div class="card h-100"><div class="card-body">
     <h5>{{ i.name }}</h5>
     <span class="badge bg-secondary">{{ i.category }}</span>
+    <span class="badge bg-light text-dark border">Jumlah: {{ i.quantity or 1 }}</span>
     <p class="mt-2 small text-muted">{{ i.description }}</p>
-    <p class="small mb-2">Pemilik: {{ i.owner.name }}</p>
+    <p class="small mb-2">Pemilik: <a href="{{ url_for('profile', user_id=i.owner_id) }}">{{ i.owner.name }}</a>
+      <span class="text-muted">· {{ i.owner.rt }}</span></p>
     {% if i.owner_id != current_user.id %}
       <a class="btn btn-sm btn-primary" href="{{ url_for('request_loan', item_id=i.id) }}">Ajukan Pinjam</a>
     {% else %}<span class="small text-muted">Alat Anda</span>{% endif %}
   </div></div></div>
-  {% else %}<p class="text-muted">Belum ada alat. Tambahkan lewat menu "Tambah Alat".</p>
+  {% else %}<p class="text-muted">Belum ada alat yang cocok. Tambahkan lewat menu "Alat Saya".</p>
   {% endfor %}
 </div>
 {% endblock %}

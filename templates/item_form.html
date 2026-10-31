@@ -1,14 +1,26 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card mx-auto" style="max-width:520px"><div class="card-body">
-  <h4>Daftarkan Alat/Fasilitas</h4>
+  <h4>{{ 'Ubah Data Alat' if item else 'Daftarkan Alat/Fasilitas' }}</h4>
   <form method="post">
-    <input class="form-control mb-2" name="name" placeholder="Nama alat" required>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="small">Nama alat</label>
+    <input class="form-control mb-2" name="name" value="{{ item.name if item else '' }}" placeholder="mis. Gelas kaca" required>
+    <label class="small">Kategori</label>
     <select class="form-select mb-2" name="category">
-      {% for c in categories %}<option>{{ c }}</option>{% endfor %}
+      {% for c in categories %}<option {% if item and item.category == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
     </select>
-    <textarea class="form-control mb-3" name="description" placeholder="Deskripsi (kondisi, jumlah, dll)"></textarea>
+    <label class="small">Jumlah unit yang dimiliki</label>
+    <input class="form-control mb-1" type="number" name="quantity" min="{{ min_qty }}" max="{{ max_qty }}" step="1"
+           value="{{ item.quantity if item else 1 }}" required>
+    <div class="form-text mb-2">
+      Isi 1 untuk barang tunggal (mis. tangga). Untuk barang banyak (mis. 100 gelas), peminjam bisa meminjam sebagian.
+      {% if item and min_qty > 1 %}<br>Minimal {{ min_qty }} karena unit sebanyak itu sedang dipinjam / sudah disetujui.{% endif %}
+    </div>
+    <label class="small">Deskripsi</label>
+    <textarea class="form-control mb-3" name="description" placeholder="Kondisi, aturan pakai, dll">{{ item.description if item else '' }}</textarea>
     <button class="btn btn-primary">Simpan</button>
+    <a class="btn btn-link" href="{{ url_for('my_items') }}">Batal</a>
   </form>
 </div></div>
 {% endblock %}

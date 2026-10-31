@@ -1,4 +1,3 @@
-"""Melatih & mengevaluasi model. Jalankan: python -m ml.train"""
 import joblib
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier

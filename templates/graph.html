@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block head %}
+<style>
+  #viz { height: 520px; background: #fff; border: 1px solid #dee2e6; border-radius: .375rem; }
+  .legend-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h4 class="mb-0">Analitik Graf Warga</h4>
+    <p class="small text-muted mb-0">SQLite menyimpan transaksi; Neo4j menganalisis keterhubungan (komunitas, PageRank, rekomendasi, jalur).</p>
+  </div>
+  <form method="post" action="{{ url_for('graph_sync') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-primary btn-sm" {% if not graph_enabled %}disabled{% endif %}>Sinkronkan ke Neo4j</button>
+  </form>
+</div>
+
+{% if not graph_enabled %}
+<div class="alert alert-warning">
+  Neo4j belum diatur. Isi environment variable <code>NEO4J_URI</code>, <code>NEO4J_USER</code>,
+  <code>NEO4J_PASSWORD</code> di file <code>.env</code> (contoh: <code>.env.example</code>) lalu jalankan ulang aplikasi. Visualisasi di bawah
+  sementara memakai data SQLite tanpa hasil analitik.
+</div>
+{% elif data is none %}
+<div class="alert alert-danger">
+  Neo4j tidak bisa diakses{% if error %}: <code>{{ error }}</code>{% endif %}.
+  Pastikan database berjalan dan kredensial benar.
+</div>
+{% endif %}
+
+{% if report %}
+<div class="card mb-3"><div class="card-body">
+  <h6>Hasil sinkronisasi terakhir {% if report.valid %}<span class="badge bg-success">valid</span>{% else %}<span class="badge bg-danger">ada selisih</span>{% endif %}</h6>
+  <div class="table-responsive">
+  <table class="table table-sm small mb-2">
+    <tr><th>Elemen</th><th>Harapan (SQLite)</th><th>Aktual (Neo4j)</th><th></th></tr>
+    {% for c in report.validasi %}
+    <tr><td>{{ c.elemen }}</td><td>{{ c.harapan }}</td><td>{{ c.aktual }}</td>
+      <td>{{ 'OK' if c.ok else 'BEDA' }}</td></tr>
+    {% endfor %}
+  </table>
+  </div>
+  {% if report.gds_version %}
+    <p class="small mb-0">GDS {{ report.gds_version }}:
+      {% if report.gds_error %}<span class="text-danger">{{ report.gds_error }}</span>
+      {% else %}
+        proyeksi {{ report.gds.proyeksi_sosial.nodeCount }} node / {{ report.gds.proyeksi_sosial.relationshipCount }} relasi ·
+        {{ report.gds.wcc.componentCount }} komponen ·
+        {{ report.gds.louvain.communityCount }} komunitas (modularity {{ report.gds.louvain.modularity }}) ·
+        PageRank {{ report.gds.pagerank.ranIterations }} iterasi
+      {% endif %}</p>
+  {% else %}
+    <p class="small text-muted mb-0">Plugin GDS tidak ditemukan: komunitas &amp; PageRank dilewati
+      (pasang plugin Graph Data Science di Neo4j Desktop).</p>
+  {% endif %}
+</div></div>
+{% endif %}
+
+{% if data %}
+<div class="row g-3 mb-3">
+  <div class="col-md-6 col-lg-3"><div class="card h-100"><div class="card-body">
+    <h6>Isi graph</h6>
+    <ul class="small mb-0 list-unstyled">{% for h in data.hitung %}<li>{{ h.nama }}: <b>{{ h.jumlah }}</b></li>{% endfor %}</ul>
+    {% if data.lintas_rt %}<p class="small mt-2 mb-0">Relasi sosial dalam RT: <b>{{ data.lintas_rt[0].dalam_rt }}</b>,
+      lintas RT: <b>{{ data.lintas_rt[0].lintas_rt }}</b></p>{% endif %}
+  </div></div></div>
+  <div class="col-md-6 col-lg-3"><div class="card h-100"><div class="card-body">
+    <h6>Alat paling sering dipinjam</h6>
+    <ol class="small mb-0">{% for b in data.barang_populer %}<li>{{ b.nama }} <span class="text-muted">({{ b.kali }}x)</span></li>
+      {% else %}<li class="text-muted">belum ada</li>{% endfor %}</ol>
+  </div></div></div>
+  <div class="col-md-6 col-lg-3"><div class="card h-100"><div class="card-body">
+    <h6>Keterlambatan per RT</h6>
+    <ul class="small mb-0 list-unstyled">{% for r in data.telat_per_rt %}
+      <li>{{ r.rt }}: {{ r.telat }}/{{ r.total }} ({{ r.persen_telat }}%)</li>
+      {% else %}<li class="text-muted">belum ada</li>{% endfor %}</ul>
+  </div></div></div>
+  <div class="col-md-6 col-lg-3"><div class="card h-100"><div class="card-body">
+    <h6>Belum terhubung</h6>
+    <p class="small text-muted mb-1">Tanpa penjamin &amp; belum pernah pinjam-meminjam.</p>
+    <p class="small mb-0">{% for w in data.terisolasi %}{{ w.nama }} ({{ w.rt }}){% if not loop.last %}, {% endif %}
+      {% else %}<span class="text-muted">semua warga sudah terhubung</span>{% endfor %}</p>
+  </div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-5"><div class="card h-100"><div class="card-body">
+    <h6>PageRank jaringan penjaminan</h6>
+    {% if data.pagerank %}
+    <table class="table table-sm small mb-1">
+      <tr><th>Warga</th><th>RT</th><th>PageRank</th><th>Dijamin</th><th>Trust</th></tr>
+      {% for p in data.pagerank %}<tr><td>{{ p.nama }}</td><td>{{ p.rt }}</td><td>{{ p.pagerank }}</td>
+        <td>{{ p.dijamin_oleh }}</td><td>{{ p.trust_score }}</td></tr>{% endfor %}
+    </table>
+    <p class="small text-muted mb-0">Tinggi bila dijamin oleh warga yang juga banyak dijamin. Ini petunjuk
+      ketokohan, bukan bukti kejujuran.</p>
+    {% else %}<p class="small text-muted mb-0">Belum dihitung (butuh GDS + sinkronisasi).</p>{% endif %}
+  </div></div></div>
+  <div class="col-lg-7"><div class="card h-100"><div class="card-body">
+    <h6>Komunitas (Louvain)</h6>
+    {% if data.komunitas %}
+    <table class="table table-sm small mb-1">
+      <tr><th>ID</th><th>Ukuran</th><th>Sebaran RT</th><th>Anggota</th></tr>
+      {% for k in data.komunitas %}<tr><td>{{ k.komunitas }}</td><td>{{ k.ukuran }}</td>
+        <td>{{ k.sebaran_rt|join(', ') }}</td><td>{{ k.anggota|join(', ') }}</td></tr>{% endfor %}
+    </table>
+    <p class="small text-muted mb-0">ID komunitas hanya label, bukan peringkat. Komunitas yang berisi
+      beberapa RT menandakan kolaborasi lintas RT.</p>
+    {% else %}<p class="small text-muted mb-0">Belum dihitung (butuh GDS + sinkronisasi).</p>{% endif %}
+  </div></div></div>
+</div>
+{% endif %}
+
+<div class="card"><div class="card-body">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <h6 class="mb-0">Peta jaringan warga</h6>
+    <span class="small text-muted" id="viz-info">memuat…</span>
+  </div>
+  <div id="viz"></div>
+  <p class="small text-muted mt-2 mb-0">
+    Warna = komunitas Louvain (atau RT bila belum dihitung) · ukuran = PageRank / Trust Score ·
+    panah biru = MENJAMIN · garis abu = PERNAH_MEMINJAM_DARI (tebal = sering). Posisi node hanya tata letak.
+  </p>
+</div></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<script>
+(function () {
+  const info = document.getElementById("viz-info");
+  if (typeof vis === "undefined") { info.textContent = "Pustaka visualisasi gagal dimuat (cek internet)."; return; }
+  const palette = ["#4e79a7", "#f28e2b", "#59a14f", "#e15759", "#76b7b2", "#edc948",
+                   "#b07aa1", "#ff9da7", "#9c755f", "#bab0ac"];
+  fetch("{{ url_for('graph_data') }}").then(r => r.json()).then(d => {
+    const byCommunity = d.nodes.some(n => n.komunitas !== null && n.komunitas !== undefined);
+    const groups = [...new Set(d.nodes.map(n => byCommunity ? n.komunitas : n.rt))].sort();
+    const color = g => palette[groups.indexOf(g) % palette.length];
+    const usePr = d.nodes.some(n => n.pagerank);
+    const nodes = d.nodes.map(n => {
+      const g = byCommunity ? n.komunitas : n.rt;
+      const size = usePr ? 8 + 30 * (n.pagerank || 0) : 8 + 0.2 * (n.trust_score || 0);
+      return { id: n.id, label: n.nama, value: size, color: color(g),
+               title: `${n.nama} · ${n.rt}\nTrust ${n.trust_score}` +
+                      (byCommunity ? `\nKomunitas ${n.komunitas}` : "") +
+                      (n.pagerank ? `\nPageRank ${n.pagerank.toFixed(3)}` : "") };
+    });
+    const edges = d.edges.map(e => e.tipe === "MENJAMIN"
+      ? { from: e.dari, to: e.ke, arrows: "to", color: { color: "#1f77b4" }, title: "menjamin" }
+      : { from: e.dari, to: e.ke, color: { color: "#adb5bd" }, width: Math.min(1 + (e.kali || 1), 6),
+          title: `pernah meminjam ${e.kali}x`, dashes: true });
+    new vis.Network(document.getElementById("viz"),
+      { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) },
+      { nodes: { shape: "dot", font: { size: 12 }, scaling: { min: 8, max: 38 } },
+        physics: { stabilization: { iterations: 200 } }, interaction: { hover: true } });
+    info.textContent = `Sumber: ${d.sumber} · ${nodes.length} warga · ${edges.length} relasi · ` +
+                       (byCommunity ? "warna per komunitas" : "warna per RT");
+  }).catch(() => { info.textContent = "Gagal memuat data graph."; });
+})();
+</script>
+{% endblock %}

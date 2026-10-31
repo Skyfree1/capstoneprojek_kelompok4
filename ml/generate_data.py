@@ -1,4 +1,3 @@
-"""Membuat DATA SIMULASI riwayat peminjaman. Jalankan: python -m ml.generate_data"""
 import numpy as np
 import pandas as pd
 
@@ -13,7 +12,6 @@ lead = rng.integers(0, 21, N)
 weekend = rng.integers(0, 2, N)
 cat = rng.integers(0, 4, N)
 
-# Aturan peluang terlambat/tidak kembali (asumsi simulasi, nyatakan di laporan)
 p = (0.10 + 0.30 * (1 - ontime) + 0.02 * np.maximum(duration - 3, 0)
      - 0.04 * (rating - 3) + 0.05 * weekend + 0.03 * (cat == 0)
      + rng.normal(0, 0.05, N))

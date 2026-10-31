@@ -1,32 +1,48 @@
 {% extends "base.html" %}
 {% block content %}
 <h4>Permintaan Peminjaman Alat Saya</h4>
+<p class="small text-muted">Trust Score = 80% reputasi riwayat pinjam (rating + ketepatan waktu) + 20% dukungan penjamin.
+  Klik nama peminjam untuk melihat alasan skornya. Skor membantu menimbang, bukan keputusan otomatis.</p>
+<div class="table-responsive">
 <table class="table table-sm bg-white align-middle">
-  <tr><th>Alat</th><th>Peminjam</th><th>Reputasi</th><th>Tanggal</th><th>Risiko (AI)</th><th>Status</th><th>Aksi</th></tr>
+  <tr><th>Alat</th><th>Peminjam</th><th>Trust Score</th><th>Tanggal</th><th>Risiko telat (ML)</th><th>Status</th><th>Aksi</th></tr>
   {% for l in loans %}
-  {% set rep = reputation(l.borrower_id) %}
+  {% set t = trust_detail(l.borrower_id) %}
   <tr>
-    <td>{{ l.item.name }}</td>
-    <td>{{ l.borrower.name }}</td>
-    <td>{{ rep if rep is not none else 'belum ada riwayat' }}</td>
-    <td>{{ l.start_date }} s/d {{ l.due_date }}</td>
+    <td>{{ l.item.name }}{% if (l.item.quantity or 1) > 1 %}
+        <div class="small"><b>{{ l.quantity or 1 }}</b> dari {{ l.item.quantity }} unit</div>{% endif %}</td>
+    <td><a href="{{ url_for('profile', user_id=l.borrower_id) }}">{{ l.borrower.name }}</a>
+        <div class="small text-muted">{{ l.borrower.rt }}</div></td>
+    <td><span class="badge bg-{{ trust_badge[t.label] }}">{{ t.score }}</span>
+        <div class="small text-muted">{% if t.is_new %}warga baru{% else %}reputasi {{ t.reputasi }}{% endif %}
+          · {{ t.penjamin_baik }} penjamin</div></td>
+    <td class="text-nowrap small">{{ l.start_date }}<br>s/d {{ l.due_date }}</td>
     <td>
       {% if l.risk_label %}
         <span class="badge bg-{{ {'rendah':'success','sedang':'warning','tinggi':'danger'}[l.risk_label] }}">
           {{ l.risk_label }} ({{ (l.risk_prob*100)|round|int }}%)</span>
-      {% else %}<span class="text-muted small">model belum dilatih</span>{% endif %}
+      {% elif l.status == 'diajukan' %}<span class="text-muted small">model belum dilatih</span>
+      {% else %}<span class="text-muted small">-</span>{% endif %}
     </td>
-    <td><span class="badge bg-info text-dark">{{ l.status }}</span></td>
+    <td><span class="badge bg-{{ 'danger' if l.status == 'terlambat' else 'info text-dark' }}">{{ l.status }}</span></td>
     <td>
       {% if l.status == 'diajukan' %}
-        <form class="d-inline" method="post" action="{{ url_for('loan_action', loan_id=l.id, action='approve') }}"><button class="btn btn-sm btn-success">Setujui</button></form>
-        <form class="d-inline" method="post" action="{{ url_for('loan_action', loan_id=l.id, action='reject') }}"><button class="btn btn-sm btn-outline-danger">Tolak</button></form>
+        <form class="d-inline" method="post" action="{{ url_for('loan_action', loan_id=l.id, action='approve') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-success">Setujui</button></form>
+        <form class="d-inline" method="post" action="{{ url_for('loan_action', loan_id=l.id, action='reject') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-outline-danger">Tolak</button></form>
       {% elif l.status == 'disetujui' %}
-        <form method="post" action="{{ url_for('loan_action', loan_id=l.id, action='handover') }}"><button class="btn btn-sm btn-primary">Serahkan alat</button></form>
+        <form method="post" action="{{ url_for('loan_action', loan_id=l.id, action='handover') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-primary">Serahkan alat</button></form>
       {% elif l.status in ('dipinjam', 'terlambat') %}
-        <form class="d-flex gap-1" method="post" action="{{ url_for('loan_action', loan_id=l.id, action='return') }}">
-          <select class="form-select form-select-sm" name="rating" style="width:80px">
+        <form class="d-flex flex-wrap gap-1" method="post" action="{{ url_for('loan_action', loan_id=l.id, action='return') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select class="form-select form-select-sm" name="rating" style="width:80px" title="Rating untuk peminjam">
             {% for r in [5,4,3,2,1] %}<option>{{ r }}</option>{% endfor %}</select>
+          <input class="form-control form-control-sm" name="note" maxlength="200" placeholder="Catatan (opsional)" style="width:160px">
           <button class="btn btn-sm btn-primary">Dikembalikan</button>
         </form>
       {% endif %}
@@ -35,4 +51,5 @@
   {% else %}<tr><td colspan="7" class="text-muted">Belum ada permintaan.</td></tr>
   {% endfor %}
 </table>
+</div>
 {% endblock %}

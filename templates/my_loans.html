@@ -1,17 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
 <h4>Pinjaman Saya</h4>
-<table class="table table-sm bg-white">
-  <tr><th>Alat</th><th>Mulai</th><th>Kembali</th><th>Status</th><th></th></tr>
+<div class="table-responsive">
+<table class="table table-sm bg-white align-middle">
+  <tr><th>Alat</th><th>Jumlah</th><th>Pemilik</th><th>Mulai</th><th>Kembali</th><th>Status</th><th></th></tr>
   {% for l in loans %}
   <tr>
-    <td>{{ l.item.name }}</td><td>{{ l.start_date }}</td><td>{{ l.due_date }}</td>
-    <td><span class="badge bg-info text-dark">{{ l.status }}</span></td>
+    <td>{{ l.item.name }}</td><td>{{ l.quantity or 1 }}</td>
+    <td><a href="{{ url_for('profile', user_id=l.item.owner_id) }}">{{ l.item.owner.name }}</a></td>
+    <td>{{ l.start_date }}</td><td>{{ l.due_date }}</td>
+    <td><span class="badge bg-{{ 'danger' if l.status == 'terlambat' else 'info text-dark' }}">{{ l.status }}</span></td>
     <td>{% if l.status == 'diajukan' %}
       <form method="post" action="{{ url_for('loan_action', loan_id=l.id, action='cancel') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-sm btn-outline-danger">Batalkan</button></form>{% endif %}</td>
   </tr>
-  {% else %}<tr><td colspan="5" class="text-muted">Belum ada pinjaman.</td></tr>
+  {% else %}<tr><td colspan="7" class="text-muted">Belum ada pinjaman.</td></tr>
   {% endfor %}
 </table>
+</div>
 {% endblock %}

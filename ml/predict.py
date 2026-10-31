@@ -20,7 +20,6 @@ def label_from(p):
 
 
 def predict_risk(features):
-    """Return (probabilitas, label). (None, None) jika model belum dilatih."""
     m = _load()
     if m is None:
         return None, None

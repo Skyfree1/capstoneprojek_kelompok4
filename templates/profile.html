@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-3">
+<div class="col-lg-5">
+  <div class="card"><div class="card-body">
+    <h4 class="mb-0">{{ user.name }}</h4>
+    <p class="text-muted small">{{ user.rt }}</p>
+    <div class="d-flex align-items-center gap-3 mb-2">
+      <span class="display-6"><span class="badge bg-{{ trust_badge[t.label] }}">{{ t.score }}</span></span>
+      <div class="small">Trust Score ({{ t.label }})<br>
+        <span class="text-muted">reputasi {{ t.reputasi if t.reputasi is not none else '50 (netral)' }}
+          · dukungan penjamin {{ t.dukungan }}</span></div>
+    </div>
+    <h6 class="mt-3">Mengapa skornya segini?</h6>
+    <ul class="small mb-2">{% for r in t.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
+    <p class="small text-muted mb-0">Rumus: 80% reputasi (50% rating + 50% ketepatan waktu) + 20% dukungan
+      (penjamin dengan reputasi &ge; 70, penuh pada 3 penjamin).</p>
+    {% if user.id != current_user.id %}
+    <form method="post" action="{{ url_for('vouch', user_id=user.id) }}" class="mt-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if i_vouch %}<button class="btn btn-sm btn-outline-danger">Cabut jaminan saya</button>
+      {% else %}<button class="btn btn-sm btn-outline-primary">Saya menjamin warga ini</button>{% endif %}
+    </form>
+    {% endif %}
+  </div></div>
+
+  {% if user.id != current_user.id and graph_enabled %}
+  <div class="card mt-3"><div class="card-body">
+    <h6>Hubungan Anda dengan {{ user.name }} (Neo4j)</h6>
+    {% if jalur is none %}
+      <p class="small text-muted mb-0">Graph belum bisa diakses. Sinkronkan dulu di menu Analitik Graf.</p>
+    {% elif jalur.hop is none %}
+      <p class="small mb-0">Belum ada jalur sosial (penjaminan / pernah meminjam) dalam 4 langkah.</p>
+    {% else %}
+      <p class="small mb-1">Terhubung dalam <b>{{ jalur.hop }} langkah</b>:</p>
+      <ol class="small mb-0">{% for k in jalur.kalimat %}<li>{{ k }}</li>{% endfor %}</ol>
+    {% endif %}
+  </div></div>
+  {% endif %}
+</div>
+
+<div class="col-lg-7">
+  <div class="card mb-3"><div class="card-body">
+    <h6>Dijamin oleh ({{ vouchers|length }})</h6>
+    <p class="small mb-0">{% for v in vouchers %}<a href="{{ url_for('profile', user_id=v.voucher_id) }}">{{ v.voucher.name }}</a>{% if not loop.last %}, {% endif %}
+      {% else %}<span class="text-muted">belum ada</span>{% endfor %}</p>
+    <h6 class="mt-3">Menjamin ({{ vouchees|length }})</h6>
+    <p class="small mb-0">{% for v in vouchees %}<a href="{{ url_for('profile', user_id=v.vouchee_id) }}">{{ v.vouchee.name }}</a>{% if not loop.last %}, {% endif %}
+      {% else %}<span class="text-muted">belum ada</span>{% endfor %}</p>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-body">
+    <h6>Alat yang dipinjamkan</h6>
+    <ul class="small mb-0">{% for i in items %}
+      <li>{% if i.owner_id != current_user.id %}<a href="{{ url_for('request_loan', item_id=i.id) }}">{{ i.name }}</a>{% else %}{{ i.name }}{% endif %}
+        <span class="text-muted">· {{ i.category }} · {{ i.quantity or 1 }} unit</span></li>
+      {% else %}<li class="text-muted">tidak ada</li>{% endfor %}</ul>
+  </div></div>
+
+  <div class="card"><div class="card-body">
+    <h6>Riwayat meminjam (10 terakhir)</h6>
+    <div class="table-responsive">
+    <table class="table table-sm small mb-0">
+      <tr><th>Alat</th><th>Jatuh tempo</th><th>Kembali</th><th>Status</th></tr>
+      {% for l in history %}
+      <tr><td>{{ l.item.name }}{% if (l.quantity or 1) > 1 %} × {{ l.quantity }}{% endif %}</td><td>{{ l.due_date }}</td><td>{{ l.returned_date or '-' }}</td>
+        <td>{% if l.status == 'dikembalikan' and l.returned_date > l.due_date %}<span class="badge bg-warning text-dark">telat {{ (l.returned_date - l.due_date).days }} hari</span>
+            {% elif l.status == 'dikembalikan' %}<span class="badge bg-success">tepat waktu</span>
+            {% else %}<span class="badge bg-{{ 'danger' if l.status == 'terlambat' else 'info text-dark' }}">{{ l.status }}</span>{% endif %}</td></tr>
+      {% else %}<tr><td colspan="4" class="text-muted">belum ada</td></tr>{% endfor %}
+    </table>
+    </div>
+  </div></div>
+</div>
+</div>
+{% endblock %}
